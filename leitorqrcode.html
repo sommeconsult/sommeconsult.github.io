@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leitor QR</title>
+    <style>
+        body { font-family: sans-serif; }
+        #preview { width: 300px; height: 200px; }
+    </style>
+</head>
+<body>
+    <video id="preview"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        const video = document.getElementById('preview');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(stream => {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    requestAnimationFrame(tick);
+                };
+            })
+            .catch(err => console.error('Erro ao acessar a câmera:', err));
+
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                if (code) {
+                    try {
+                        new URL(code.data);
+                        window.parent.postMessage({ qrCodeResult: code.data }, '*');
+                    } catch (error) {
+                        console.log("Não é um link");
+                        window.parent.postMessage({ qrCodeResult: "Não é um link" }, '*'); //Envia mensagem de erro para a pagina principal
+                    }
+                    video.pause();
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                    return;
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+    </script>
+</body>
+</html>
