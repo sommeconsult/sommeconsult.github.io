@@ -46,10 +46,10 @@
                 if (code) {
                     try {
                         new URL(code.data);
-                        window.parent.postMessage({ qrCodeResult: code.data }, "https://www.cartoriozortea.com.br");
+                        window.parent.postMessage({ qrCodeResult: code.data }, "*");
                     } catch (error) {
                         console.log("Não é um link");
-                        window.parent.postMessage({ qrCodeResult: "Não é um link" }, "https://www.cartoriozortea.com.br");
+                        window.parent.postMessage({ qrCodeResult: "Não é um link" }, "*");
                     }
                     video.pause();
                     streamGlobal.getTracks().forEach(track => track.stop());
