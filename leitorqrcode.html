@@ -21,10 +21,18 @@
             if (event.data.type === 'stream') {
                 streamGlobal = event.data.stream;
                 video.srcObject = streamGlobal;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    requestAnimationFrame(tick);
-                };
+
+                const videoTrack = streamGlobal.getVideoTracks()[0];
+                const constraints = event.data.constraints;
+
+                // Aplica as constraints no contexto do iframe
+                videoTrack.applyConstraints(constraints)
+                .then(() => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        requestAnimationFrame(tick);
+                    };
+                }).catch(err => console.error("Erro ao aplicar constraints:", err));
             }
         });
 
