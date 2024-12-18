@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
 <head>
     <title>Leitor QR</title>
@@ -12,29 +11,19 @@
     <canvas id="canvas" style="display: none;"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
-        let video = document.getElementById('preview');
-        let canvas = document.getElementById('canvas');
-        let context = canvas.getContext('2d');
-        let streamGlobal;
+        const video = document.getElementById('preview');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
 
-        window.addEventListener('message', function(event) {
-            if (event.data.type === 'stream') {
-                streamGlobal = event.data.stream;
-                video.srcObject = streamGlobal;
-
-                const videoTrack = streamGlobal.getVideoTracks()[0];
-                const constraints = event.data.constraints;
-
-                // Aplica as constraints no contexto do iframe
-                videoTrack.applyConstraints(constraints)
-                .then(() => {
-                    video.onloadedmetadata = () => {
-                        video.play();
-                        requestAnimationFrame(tick);
-                    };
-                }).catch(err => console.error("Erro ao aplicar constraints:", err));
-            }
-        });
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(stream => {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    requestAnimationFrame(tick);
+                };
+            })
+            .catch(err => console.error('Erro ao acessar a câmera:', err));
 
         function tick() {
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -46,13 +35,13 @@
                 if (code) {
                     try {
                         new URL(code.data);
-                        window.parent.postMessage({ qrCodeResult: code.data }, "*");
+                        window.parent.postMessage({ qrCodeResult: code.data }, '*');
                     } catch (error) {
                         console.log("Não é um link");
-                        window.parent.postMessage({ qrCodeResult: "Não é um link" }, "*");
+                        window.parent.postMessage({ qrCodeResult: "Não é um link" }, '*'); //Envia mensagem de erro para a pagina principal
                     }
                     video.pause();
-                    streamGlobal.getTracks().forEach(track => track.stop());
+                    video.srcObject.getTracks().forEach(track => track.stop());
                     return;
                 }
             }
